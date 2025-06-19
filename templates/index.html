@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Stenosis Segmentation</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+</head>
+
+<body>
+  <div class="container mt-5 glass-card">
+    <div class="header">
+      <h2 class="text-center mb-4 text-dark">Stenosis Segmentation - Doctor's Assistant</h2>
+    </div>
+
+    <form id="uploadForm">
+      <div class="mb-3">
+        <label for="patientId" class="form-label">Patient ID</label>
+        <input type="text" class="form-control" id="patientId" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="doctorId" class="form-label">Doctor ID</label>
+        <input type="text" class="form-control" id="doctorId" required>
+      </div>
+
+
+      <div class="upload-frame" id="uploadFrame">
+        <label for="imageInput" id="uploadLabel">
+          <img id="imagePreview" class="preview-image" src="{{ url_for('static', filename='placeholder.png') }}"
+            alt="Upload Image">
+        </label>
+        <input type="file" id="imageInput" accept="image/png" hidden>
+        <div id="uploadControls" class="d-none mt-2">
+          <button type="button" class="btn btn-sm btn-secondary" id="changeImage">Change Image</button>
+          <button type="button" class="btn btn-sm btn-danger" id="removeImage">Remove Image</button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary mt-3">Analyze</button>
+    </form>
+
+    <div id="results" class="row mt-3 d-none">
+      <div class="col-md-6">
+        <h5>Stage 1 Output</h5>
+        <canvas id="canvas1" width="512" height="512" class="result-canvas mb-2"></canvas>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="view1" value="mask"> Mask Only
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="view1" value="overlay" checked> Overlay
+        </div>
+        <div class="form-check mt-1">
+          <input class="form-check-input" type="checkbox" id="smooth1" checked>
+          <label class="form-check-label" for="smooth1">Smooth Mask Boundary</label>
+        </div>
+        <input type="range" min="0" max="1" step="0.01" value="1" id="opacity1">
+      </div>
+
+      <div class="col-md-6">
+        <h5>Stage 2 Output</h5>
+        <canvas id="canvas2" width="512" height="512" class="result-canvas mb-2"></canvas>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="view2" value="mask"> Mask Only
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="view2" value="overlay" checked> Overlay
+        </div>
+        <div class="form-check mt-1">
+          <input class="form-check-input" type="checkbox" id="smooth2" checked>
+          <label class="form-check-label" for="smooth2">Smooth Mask Boundary</label>
+        </div>
+        <input type="range" min="0" max="1" step="0.01" value="1" id="opacity2">
+      </div>
+    </div>
+
+    <div id="controlsPanel" class="mt-4 d-none">
+      <h5 class="text-dark">Overlay Controls</h5>
+      <div class="row mb-2">
+        <div class="col-md-4">
+          <label>Overlay Color (Stage 1)</label>
+          <input type="color" id="overlayColor1" value="#00ff00" class="form-control form-control-color">
+        </div>
+        <div class="col-md-4">
+          <label>Overlay Color (Stage 2)</label>
+          <input type="color" id="overlayColor2" value="#ff0000" class="form-control form-control-color">
+        </div>
+        <div class="col-md-4">
+          <label>Blend Mode</label>
+          <select id="blendMode" class="form-select">
+            <option value="normal">Normal</option>
+            <option value="multiply">Multiply</option>
+            <option value="screen">Screen</option>
+            <option value="overlay">Overlay</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div id="legendPanel" class="mt-3 d-none legend">
+      <strong>Legend:</strong>
+      <span id="stage1legend" style="color: #00ff00;">●</span> Stage 1 Vessel Mask &nbsp;
+      <span id="stage2legend" style="color: #ff0000;">●</span> Stage 2 Stenosis Mask
+    </div>
+
+    <!-- General Notes -->
+    <div id="doctorNotesPanel" class="mt-4 d-none">
+      <h5 class="text-dark">Doctor Notes</h5>
+      <textarea id="generalNotes" class="form-control mb-3" rows="3"
+        placeholder="Enter general observations..."></textarea>
+    </div>
+    <div class="d-grid mt-3">
+      <button type="button" id="exportBtn" class="btn btn-outline-primary d-none">Export Analysis</button>
+    </div>
+
+
+  </div>
+
+  <!-- Polygon Annotation Modal -->
+  <div id="annotationModal" class="annotation-modal d-none">
+    <div class="annotation-content">
+      <canvas id="annotationCanvas" width="512" height="512"></canvas>
+      <div class="annotation-sidebar">
+        <button id="exitAnnotation" class="btn-close btn-close-red" aria-label="Close"></button>
+        <div class="mb-3 mt-4">
+          <label for="polygonColor">Polygon Color</label>
+          <input type="color" id="polygonColor" value="#0000ff" class="form-control form-control-color">
+        </div>
+        <div class="mb-3">
+          <label for="polygonLabel">Label/Comment</label>
+          <textarea id="polygonLabel" class="form-control" rows="3" placeholder="Describe the region..."></textarea>
+        </div>
+        <button id="saveAnnotation" class="btn btn-success w-100">Save Annotation</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='main.js') }}"></script>
+</body>
+
+</html>

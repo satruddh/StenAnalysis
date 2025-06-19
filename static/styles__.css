@@ -1,0 +1,58 @@
+body {
+  background-color: #fffcf2;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.upload-frame {
+  width: 512px;
+  height: 512px;
+  border: 2px dashed #ccc5b9;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.result-image {
+  width: 100%;
+  height: auto;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+}
+
+.btn-primary {
+  background-color: #eb5e28;
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: #d24e1f;
+}
+
+.result-canvas {
+  border: 2px solid #ccc5b9;
+  width: 100%;
+  max-width: 512px;
+  height: auto;
+  background-color: #f8f8f8;
+}
+

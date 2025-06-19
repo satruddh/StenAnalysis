@@ -1,0 +1,9 @@
+/__pycache__
+/cases
+/static/main__.js
+/static/main_.js
+/static/updated_main.js
+
+/templates/index__.html
+
+*.pth
