@@ -82,7 +82,7 @@ body {
   background-color: #b0aaa3;
 }
 
-/* === Polygon Annotation Modal === */
+
 .annotation-modal {
   position: fixed;
   top: 0;
@@ -125,7 +125,7 @@ body {
   position: relative;
 }
 
-/* Exit button (red X) */
+
 .btn-close-red {
   position: absolute;
   top: 10px;
@@ -148,7 +148,7 @@ body {
 
 .annotation-tooltip {
   position: absolute;
-  max-width: 300px; /* Soft horizontal limit */
+  max-width: 300px;
   min-width: 60px;
   padding: 6px 10px;
   font-size: 12px;
@@ -177,7 +177,7 @@ body {
   opacity: 0;
 }
 
-/* Speech-bubble arrow */
+
 .annotation-tooltip::after {
   content: '';
   position: absolute;
@@ -195,3 +195,68 @@ body {
   overflow: visible;
 }
 
+
+.sidebar {
+  width: 250px;
+  background-color: #f8f9fa;
+  transition: width 0.3s ease;
+  overflow: hidden;
+  position: relative;
+  min-height: 100vh;
+}
+
+.sidebar.collapsed {
+  width: 0;
+}
+
+
+#sidebarToggleBtn {
+  position: absolute;
+  top: 50%;
+  right: -12px;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  background-color: #eb5e28;
+  border-radius: 0 4px 4px 0;
+  cursor: pointer;
+  z-index: 1000;
+}
+
+
+#sidebarToggleBtn::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 4px;
+  transform: translateY(-50%) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  display: inline-block;
+  padding: 2px;
+  transition: transform 0.3s ease;
+}
+
+
+.sidebar.collapsed #sidebarToggleBtn::after {
+  transform: translateY(-50%) rotate(-135deg);
+}
+
+.navbar {
+  z-index: 1050;
+  height: 60px;
+}
+
+body {
+  padding-top: 60px; 
+}
+
+.custom-navbar {
+  /* background: linear-gradient(to bottom, #e5b3b389, #dde2e339);  */
+  background-color: #ffffff;
+  height: 60px; 
+  z-index: 1050;
+  border-bottom: 1px solid #aaa;
+}

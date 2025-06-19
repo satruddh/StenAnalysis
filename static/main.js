@@ -206,6 +206,7 @@ document.getElementById("uploadForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const patientId = document.getElementById("patientId").value;
+  const doctorId = document.getElementById("doctorId").value || "UnknownDoctor";
   const file = imageInput.files[0];
   if (!file || !patientId) return;
 
@@ -226,13 +227,18 @@ document.getElementById("uploadForm").addEventListener("submit", async (e) => {
 
   activePatientId = patientId;
   activeTimestamp = data.timestamp;
+  loadSidebarCases(patientId);
 
   document.getElementById("results").classList.remove("d-none");
   document.getElementById("controlsPanel").classList.remove("d-none");
   document.getElementById("legendPanel").classList.remove("d-none");
   document.getElementById("doctorNotesPanel").classList.remove("d-none");
   document.getElementById("exportBtn").classList.remove("d-none");
-  // document.getElementById("patientIdDisplay").innerText = activePatientId;
+  document.getElementById("saveBtn").classList.remove("d-none");
+  document.getElementById("patientInfo").classList.remove("d-none");
+  document.getElementById("uploadSection").classList.add("d-none");
+  document.getElementById("displayPatientId").textContent = patientId;
+  document.getElementById("displayDoctorId").textContent = doctorId;
 
   inputImg = await loadImage("data:image/png;base64," + data.input_base64);
   mask1 = await loadImage("data:image/png;base64," + data.output1_base64);
@@ -248,7 +254,6 @@ document.getElementById("uploadForm").addEventListener("submit", async (e) => {
 
   drawCanvas("canvas1", inputImg, mask1, opacity1, "overlay", smooth1, overlayColor1);
   drawCanvas("canvas2", inputImg, mask2, opacity2, "overlay", smooth2, overlayColor2);
-
 
   drawCanvas("canvas1", inputImg, mask1, opacity1, "overlay", false, overlayColor1);
   drawCanvas("canvas2", inputImg, mask2, opacity2, "overlay", false, overlayColor2);
@@ -443,3 +448,116 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
     alert("Export failed: " + err.message);
   }
 });
+
+
+document.getElementById("saveBtn").addEventListener("click", async () => {
+  const generalNotes = document.getElementById("generalNotes").value || "";
+  const doctorId = document.getElementById("doctorId")?.value || "UnknownDoctor";
+
+  const canvas1DataUrl = document.getElementById("canvas1").toDataURL("image/png");
+  const canvas2DataUrl = document.getElementById("canvas2").toDataURL("image/png");
+
+  const payload = {
+    doctor_id: doctorId,
+    patient_id: activePatientId,
+    timestamp: activeTimestamp,
+    notes: generalNotes,
+    annotations: polygonAnnotations,
+    images: {
+      canvas1_annotated: canvas1DataUrl,
+      canvas2_annotated: canvas2DataUrl
+    }
+  };
+
+  try {
+    const response = await fetch("http://127.0.0.1:5000/api/save", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json();
+    if (response.ok) {
+      alert("Analysis saved successfully!");
+      window.location.reload();
+
+    } else {
+      throw new Error(result.error || "Save failed.");
+    }
+  } catch (err) {
+    alert("Save failed: " + err.message);
+  }
+});
+
+
+window.addEventListener("DOMContentLoaded", loadSidebarCases);
+
+async function loadSidebarCases() {
+  const res = await fetch(`/api/all_cases`);
+  const data = await res.json();
+
+  caseList.innerHTML = "";
+
+  if (!data.cases || data.cases.length === 0) {
+    caseSidebar.classList.add("d-none");
+    return;
+  }
+
+  data.cases.forEach(item => {
+    const entry = document.createElement("div");
+    entry.className = "case-entry border-bottom py-2";
+    entry.innerText = `Patient: ${item.patient_id} | Case: ${item.timestamp}`;
+    entry.style.cursor = "pointer";
+    entry.onclick = () => loadCase(item.patient_id, item.timestamp);
+    caseList.appendChild(entry);
+  });
+
+  caseSidebar.classList.remove("d-none");
+}
+
+
+async function loadCase(patientId, timestamp) {
+  const res = await fetch(`http://127.0.0.1:5000/api/load_case/${patientId}/${timestamp}`);
+  const data = await res.json();
+
+  activePatientId = patientId;
+  activeTimestamp = timestamp;
+  polygonAnnotations = data.annotations || [];
+
+  inputImg = await loadImage("data:image/png;base64," + data.input_base64);
+  mask1 = await loadImage("data:image/png;base64," + data.output1_base64);
+  mask2 = await loadImage("data:image/png;base64," + data.output2_base64);
+
+  document.getElementById("generalNotes").value = data.notes || "";
+
+  document.getElementById("results").classList.remove("d-none");
+  document.getElementById("controlsPanel").classList.remove("d-none");
+  document.getElementById("legendPanel").classList.remove("d-none");
+  document.getElementById("doctorNotesPanel").classList.remove("d-none");
+  document.getElementById("exportBtn").classList.remove("d-none");
+  document.getElementById("patientInfo").classList.remove("d-none");
+  document.getElementById("saveBtn").classList.remove("d-none");
+  document.getElementById("uploadSection").classList.add("d-none");
+  document.getElementById("displayPatientId").textContent = patientId;
+  document.getElementById("displayDoctorId").textContent = data.doctor_id || "N/A";
+
+  console.log("Loaded case for patient %s at timestamp %s", patientId, timestamp, doctorId);
+
+  const opacity1 = parseFloat(document.getElementById("opacity1").value);
+  const opacity2 = parseFloat(document.getElementById("opacity2").value);
+  const overlayColor1 = document.getElementById("overlayColor1").value;
+  const overlayColor2 = document.getElementById("overlayColor2").value;
+
+  const smooth1 = document.getElementById("smooth1").checked;
+  const smooth2 = document.getElementById("smooth2").checked;
+
+  drawCanvas("canvas1", inputImg, mask1, opacity1, "overlay", smooth1, overlayColor1);
+  drawCanvas("canvas2", inputImg, mask2, opacity2, "overlay", smooth2, overlayColor2);
+}
+
+document.getElementById("newCaseButton").addEventListener("click", () => {
+  window.location.href = "/";
+});
+
