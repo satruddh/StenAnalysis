@@ -199,10 +199,27 @@ body {
 .sidebar {
   width: 250px;
   background-color: #f8f9fa;
-  transition: width 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+ 
+  height: 100vh;
   overflow: hidden;
+  border-right: 1px solid #ccc;
+}
+
+#caseList {
+  overflow-y: auto;
+  flex-grow: 1;
+  padding-right: 6px;
+}
+
+.newCase {
   position: relative;
-  min-height: 100vh;
+  bottom: 10%;
+  text-align: center;
+  cursor: pointer;
+  padding: 10px;
 }
 
 .sidebar.collapsed {
@@ -254,7 +271,7 @@ body {
 }
 
 .custom-navbar {
-  /* background: linear-gradient(to bottom, #e5b3b389, #dde2e339);  */
+ 
   background-color: #ffffff;
   height: 60px; 
   z-index: 1050;
@@ -268,7 +285,7 @@ body {
 }
 
 .form-control-centered {
-  /* max-width: 400px; */
+ 
   margin: 0 auto;
 }
 

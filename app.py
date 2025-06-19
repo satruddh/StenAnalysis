@@ -29,11 +29,10 @@ def after_request(response):
 
 def tensor_to_base64(tensor):
     """Convert a PyTorch tensor to a base64 image string."""
-    tensor = tensor.squeeze().cpu()  # Remove any single-dimensional entries
+    tensor = tensor.squeeze().cpu()  
 
-    # Handle 3-channel (RGB) or 1-channel (Grayscale)
     if tensor.ndim == 3 and tensor.shape[0] == 3:
-        # (3, H, W) to (H, W, 3)
+        
         tensor = tensor.permute(1, 2, 0).numpy()
         mode = "RGB"
     elif tensor.ndim == 2:
@@ -42,10 +41,10 @@ def tensor_to_base64(tensor):
     else:
         raise ValueError(f"Unsupported tensor shape: {tensor.shape}")
 
-    # Convert to uint8
+    
     tensor = (tensor * 255).astype(np.uint8)
 
-    # Create the PIL image
+    
     image = Image.fromarray(tensor, mode=mode)
     buffered = io.BytesIO()
     image.save(buffered, format="PNG")
@@ -85,9 +84,9 @@ def inference():
     else:
         return jsonify({"error": "Unsupported input type"}), 400
 
-    # input_filename = f"{timestamp}_input.png"
-    # file_path = os.path.join(case_dir, "input.png")
-    # file.save(file_path)
+    
+    
+    
 
     with open(input_png_path,'rb') as f:
         input_base64 = base64.b64encode(f.read()).decode("utf-8")
@@ -96,7 +95,7 @@ def inference():
         image_tensor = preprocess_image(input_png_path)
         output1, output2 = run_inference(image_tensor)
 
-        # Convert and save outputs
+        
         output1_base64 = tensor_to_base64(output1)
         output2_base64 = tensor_to_base64(output2)
 
@@ -136,7 +135,7 @@ def export_analysis():
         case_dir = os.path.join(patient_dir, f"case_{timestamp}")
         os.makedirs(case_dir, exist_ok=True)
 
-        # Save annotated images
+        
         saved_paths = []
         for name, base64_str in annotated_images.items():
             img_data = base64.b64decode(base64_str.split(",")[1])
@@ -145,17 +144,17 @@ def export_analysis():
                 f.write(img_data)
             saved_paths.append(path)
 
-        # Save notes.txt
+        
         notes_path = os.path.join(case_dir, "notes.txt")
         with open(notes_path, "w") as f:
             f.write(notes)
 
-        # Save annotations.json
+        
         annotation_path = os.path.join(case_dir, "annotations.json")
         with open(annotation_path, "w") as f:
             json.dump(annotations, f, indent=2)
 
-        # Create a PDF report
+        
         pdf_path = os.path.join(case_dir, "report.pdf")
         pdf = FPDF()
         pdf.add_page()
@@ -169,18 +168,18 @@ def export_analysis():
         pdf.multi_cell(0, 10, f"Doctor's Notes:\n{notes}")
         pdf.ln(10)
         
-        # Embed annotated images
+        
         for name in annotated_images.keys():
             img_path = os.path.join(case_dir, f"{name}.png")
             if os.path.exists(img_path):
                 pdf.set_font("Arial", "B", 12)
                 pdf.cell(0, 10, f"{name.replace('_', ' ').capitalize()}:", ln=True)
-                pdf.image(img_path, w=120)  # You can adjust width as needed
+                pdf.image(img_path, w=120)  
                 pdf.ln(10)
         
         pdf.output(pdf_path)
 
-        # Create ZIP bundle
+        
         zip_path = os.path.join(case_dir, "export_bundle.zip")
         with zipfile.ZipFile(zip_path, "w") as zipf:
             zipf.write(notes_path, "notes.txt")
@@ -210,17 +209,17 @@ def save_analysis():
         case_dir = os.path.join(patient_dir, f"case_{timestamp}")
         os.makedirs(case_dir, exist_ok=True)
 
-        # Save notes.txt
+        
         notes_path = os.path.join(case_dir, "notes.txt")
         with open(notes_path, "w") as f:
             f.write(notes)
 
-        # Save annotations.json
+        
         annotation_path = os.path.join(case_dir, "annotations.json")
         with open(annotation_path, "w") as f:
             json.dump(annotations, f, indent=2)
 
-        # Save annotated images
+        
         annotated_files = {}
         for name, base64_str in annotated_images.items():
             img_data = base64.b64decode(base64_str.split(",")[1])
@@ -230,14 +229,14 @@ def save_analysis():
                 f.write(img_data)
             annotated_files[name] = filename
 
-        # Update index.json
+        
         index_path = os.path.join(patient_dir, "index.json")
         index_data = {"patient_id": patient_id, "cases": []}
         if os.path.exists(index_path):
             with open(index_path, "r") as f:
                 index_data = json.load(f)
 
-        # Remove existing entry with same timestamp + doctor_id if exists
+        
         index_data["cases"] = [
             entry for entry in index_data["cases"]
             if not (entry["timestamp"] == timestamp and entry["doctor_id"] == doctor_id)
@@ -275,7 +274,7 @@ def list_cases(patient_id):
         note = ""
         if os.path.exists(notes_path):
             with open(notes_path) as f:
-                note = f.read().strip().split("\n")[0]  # First line of notes
+                note = f.read().strip().split("\n")[0]  
         cases.append({
             "timestamp": folder.replace("case_", ""),
             "note": note
@@ -345,7 +344,7 @@ def all_cases():
                     all_data.append({
                         "patient_id": patient_id,
                         "timestamp": case["timestamp"],
-                        "note": case.get("notes", "").split("\n")[0]  # preview
+                        "note": case.get("notes", "").split("\n")[0]  
                     })
         except Exception as e:
             print(f"Error reading index.json for {patient_id}: {e}")

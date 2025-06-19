@@ -1,6 +1,6 @@
-// ========================== main.js ==========================
 
-// Basic UI Elements
+
+
 const imageInput = document.getElementById("imageInput");
 const imagePreview = document.getElementById("imagePreview");
 const uploadControls = document.getElementById("uploadControls");
@@ -57,7 +57,7 @@ function drawCanvas(canvasId, baseImg, maskImg, opacity = 1.0, mode = "mask", sm
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Draw base image and overlay
+  
   if (mode === "mask") {
     ctx.drawImage(maskImg, 0, 0, canvas.width, canvas.height);
   } else {
@@ -89,7 +89,7 @@ function drawCanvas(canvasId, baseImg, maskImg, opacity = 1.0, mode = "mask", sm
     }
   }
 
-  // Draw polygon annotations
+  
   polygonAnnotations.forEach(poly => {
     if (poly.stage === canvasId) {
       ctx.strokeStyle = poly.color || "#00ffff";
@@ -102,7 +102,7 @@ function drawCanvas(canvasId, baseImg, maskImg, opacity = 1.0, mode = "mask", sm
       ctx.fill();
       ctx.stroke();
 
-      // Draw chat bubble label at centroid
+      
       const center = poly.points.reduce((acc, pt) => {
         acc.x += pt.x;
         acc.y += pt.y;
@@ -149,7 +149,7 @@ function drawCanvas(canvasId, baseImg, maskImg, opacity = 1.0, mode = "mask", sm
     }
   });
 
-  // Draw point annotations
+  
   pointAnnotations.forEach(pt => {
     if (pt.stage === canvasId) {
       ctx.beginPath();
@@ -157,7 +157,7 @@ function drawCanvas(canvasId, baseImg, maskImg, opacity = 1.0, mode = "mask", sm
       ctx.fillStyle = "yellow";
       ctx.fill();
 
-      // Draw label bubble for point
+      
       const label = pt.label || "Note";
       ctx.font = "13px Arial";
       const padding = 6;
@@ -321,7 +321,7 @@ function createAnnotationModal() {
 }
 
 
-// ========== Fabric.js Annotation ==========
+
 function setupFabricAnnotation(canvasId) {
   const sourceCanvas = document.getElementById(canvasId);
   const modal = document.getElementById("annotationModal");
@@ -386,7 +386,7 @@ function setupFabricAnnotation(canvasId) {
   };
 }
 
-// Update legend colors in sync with overlay color pickers
+
 function setupLegendColorSync() {
   const legend1 = document.getElementById("stage1legend");
   const legend2 = document.getElementById("stage2legend");
@@ -411,18 +411,18 @@ function setupLegendColorSync() {
   });
 }
 
-// Call this once after inference completes (i.e., after `setupControls`)
+
 setupLegendColorSync();
 
 document.getElementById("exportBtn").addEventListener("click", async () => {
   const generalNotes = document.getElementById("generalNotes").value || "";
   const doctorId = document.getElementById("doctorId")?.value || "UnknownDoctor";
 
-  // Generate annotated canvas images as base64
+  
   const canvas1DataUrl = document.getElementById("canvas1").toDataURL("image/png");
   const canvas2DataUrl = document.getElementById("canvas2").toDataURL("image/png");
 
-  // Prepare payload for JSON POST
+  
   const payload = {
     doctor_id: doctorId,
     patient_id: activePatientId,
