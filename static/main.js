@@ -17,8 +17,15 @@ let polygonAnnotations = [];
 
 imageInput.addEventListener("change", () => {
   const file = imageInput.files[0];
+  let inputType = document.querySelector('input[name="inputType"]:checked').value; 
   if (file) {
-    imagePreview.src = URL.createObjectURL(file);
+    if (inputType === "dicom") {
+      
+      document.getElementById("imagePreview").src = "/static/file_preview.png";
+    }
+    else {
+      imagePreview.src = URL.createObjectURL(file);
+    }
     uploadControls.classList.remove("d-none");
   }
 });
@@ -213,6 +220,10 @@ document.getElementById("uploadForm").addEventListener("submit", async (e) => {
   const formData = new FormData();
   formData.append("image", file);
   formData.append("patient_id", patientId);
+  formData.append("doctor_id", doctorId);
+  const inputType = document.querySelector('input[name="inputType"]:checked').value;
+  formData.append("input_type", inputType);
+
 
   const response = await fetch("/api/inference", {
     method: "POST",

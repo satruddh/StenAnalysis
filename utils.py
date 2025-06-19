@@ -7,6 +7,11 @@ from torchvision import transforms
 from PIL import Image
 from torchvision.transforms import functional as TF
 
+import pydicom
+import numpy as np
+import json
+import os
+
 MODEL1_PATH = "./model1_scripted.pt"
 MODEL2_PATH = "./model2_scripted.pt"
 
@@ -28,26 +33,60 @@ def preprocess_image(image_path):
 def run_inference(image_tensor):
     """Run inference through both models with reprocessing for model2."""
     with torch.no_grad():
-        # Stage 1: Model 1 Inference
-        output1 = model1(image_tensor)
-        output1 = torch.sigmoid(output1)  # Single-channel mask in [0, 1]
-
-        # Convert to PIL image to mimic save-load behavior
-        output1_img = TF.to_pil_image(output1.squeeze())  # Converts to single-channel PIL image
         
-        # Reprocess for model2: Convert to 3-channel RGB
+        output1 = model1(image_tensor)
+        output1 = torch.sigmoid(output1)  
+
+        
+        output1_img = TF.to_pil_image(output1.squeeze())  
+        
+        
         output1_img_rgb = output1_img.convert("RGB")
         output1_tensor = transforms.ToTensor()(output1_img_rgb).unsqueeze(0)
 
-        # Stage 2: Model 2 Inference
+        
         output2 = model2(output1_tensor)
         output2 = torch.sigmoid(output2)
 
     return output1, output2
 
 
-# image_path = "./26.png"
+def convert_dicom_to_png(dicom_file_path, output_png_path, metadata_output_path=None):
+    ds = pydicom.dcmread(dicom_file_path)
 
-# img = preprocess_image(image_path)
-# # print(img.shape)
-# x,y = run_inference(img)
+    
+    metadata = {}
+    for key in ["PatientID", "Modality", "StudyDate", "Rows", "Columns", "BitsStored",
+                "PhotometricInterpretation", "SamplesPerPixel", "PixelRepresentation"]:
+        metadata[key] = str(ds.get(key, "Not Available"))
+
+    if metadata_output_path:
+        with open(metadata_output_path, "w") as f:
+            json.dump(metadata, f, indent=2)
+
+    
+    pixel_array = ds.pixel_array
+
+    
+    if len(pixel_array.shape) == 3:
+        if pixel_array.shape[0] == 1:
+            pixel_array = pixel_array[0]
+        elif pixel_array.shape[2] == 3:
+            pixel_array = pixel_array[:, :, :3]
+        else:
+            pixel_array = pixel_array[0]
+
+    
+    if pixel_array.dtype == np.uint8:
+        pass
+    elif pixel_array.dtype == np.uint16:
+        pixel_array = (pixel_array / 256).astype(np.uint8)
+    else:
+        pixel_array = ((pixel_array - pixel_array.min()) /
+                      (pixel_array.max() - pixel_array.min()) * 255).astype(np.uint8)
+
+    
+    img = Image.fromarray(pixel_array)
+    img.save(output_png_path)
+
+    return metadata

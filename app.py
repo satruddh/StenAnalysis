@@ -6,7 +6,7 @@ import io
 import base64
 from PIL import Image
 import torch
-from utils import preprocess_image, run_inference
+from utils import convert_dicom_to_png, preprocess_image, run_inference
 import zipfile
 import json
 from fpdf import FPDF
@@ -55,28 +55,45 @@ def tensor_to_base64(tensor):
 
 @app.route("/api/inference", methods=["POST"])
 def inference():
-    if "image" not in request.files or "patient_id" not in request.form:
-        return jsonify({"error": "Image and Patient ID are required"}), 400
+    if "image" not in request.files or "patient_id" not in request.form or "input_type" not in request.form:
+        return jsonify({"error": "Image, Patient ID, and Input Type are required"}), 400
 
     file = request.files["image"]
     patient_id = request.form["patient_id"]
+    input_type = request.form["input_type"].lower()
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
     case_dir = os.path.join(BASE_CASE_DIR, patient_id, f"case_{timestamp}")
     os.makedirs(case_dir, exist_ok=True)
 
-    # Save the original uploaded image
-    # input_filename = f"{timestamp}_input.png"
-    file_path = os.path.join(case_dir, "input.png")
-    file.save(file_path)
+    input_png_path = os.path.join(case_dir, "input.png")
 
-    with open(file_path,'rb') as f:
+    if input_type == "png":
+        file.save(input_png_path)
+    elif input_type == "dicom":
+        dicom_path = os.path.join(case_dir, "input.dcm")
+        file.save(dicom_path)
+
+        try:
+            convert_dicom_to_png(
+                dicom_file_path=dicom_path,
+                output_png_path=input_png_path,
+                metadata_output_path=os.path.join(case_dir, "dicom_metadata.json")
+            )
+        except Exception as e:
+            return jsonify({"error": f"Failed to process DICOM: {str(e)}"}), 500
+    else:
+        return jsonify({"error": "Unsupported input type"}), 400
+
+    # input_filename = f"{timestamp}_input.png"
+    # file_path = os.path.join(case_dir, "input.png")
+    # file.save(file_path)
+
+    with open(input_png_path,'rb') as f:
         input_base64 = base64.b64encode(f.read()).decode("utf-8")
 
-    # Run inference
-
     try:
-        image_tensor = preprocess_image(file_path)
+        image_tensor = preprocess_image(input_png_path)
         output1, output2 = run_inference(image_tensor)
 
         # Convert and save outputs

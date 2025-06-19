@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  stenosis-app:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./cases:/app/cases           
+    environment:
+      - FLASK_ENV=production
