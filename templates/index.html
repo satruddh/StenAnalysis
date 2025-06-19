@@ -12,12 +12,12 @@
 
 <body>
   <nav class="navbar fixed-top shadow-sm custom-navbar">
-  <div class="container-fluid justify-content-center">
-    <span class="navbar-brand mb-0 h4 text-center text-dark">
-      StenAnalysis
-    </span>
-  </div>
-</nav>
+    <div class="container-fluid justify-content-center">
+      <span class="navbar-brand mb-0 h4 text-center text-dark">
+        StenAnalysis
+      </span>
+    </div>
+  </nav>
 
   <div class="d-flex">
     <!-- Sidebar Toggle + Case List -->
@@ -37,24 +37,24 @@
 
       <!-- Upload Section -->
       <div id="uploadSection">
-        <form id="uploadForm">
+        <form id="uploadForm" class="mx-auto upload-form text-center">
           <div class="mb-3">
             <label for="patientId" class="form-label">Patient ID</label>
-            <input type="text" class="form-control" id="patientId" required>
+            <input type="text" class="form-control form-control-centered" id="patientId" required>
           </div>
 
           <div class="mb-3">
             <label for="doctorId" class="form-label">Doctor ID</label>
-            <input type="text" class="form-control" id="doctorId" required>
+            <input type="text" class="form-control form-control-centered" id="doctorId" required>
           </div>
 
-          <div class="upload-frame" id="uploadFrame">
+          <div class="upload-frame mx-auto" id="uploadFrame">
             <label for="imageInput" id="uploadLabel">
               <img id="imagePreview" class="preview-image" src="{{ url_for('static', filename='placeholder.png') }}"
                 alt="Upload Image">
             </label>
             <input type="file" id="imageInput" accept="image/png" hidden>
-            <div id="uploadControls" class="d-none mt-2">
+            <div id="uploadControls" class="d-none mt-2 d-flex justify-content-center gap-2">
               <button type="button" class="btn btn-sm btn-secondary" id="changeImage">Change Image</button>
               <button type="button" class="btn btn-sm btn-danger" id="removeImage">Remove Image</button>
             </div>
@@ -62,6 +62,7 @@
 
           <button type="submit" class="btn btn-primary mt-3">Analyze</button>
         </form>
+
       </div>
 
       <!-- Patient Info -->

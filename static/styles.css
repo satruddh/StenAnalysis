@@ -260,3 +260,28 @@ body {
   z-index: 1050;
   border-bottom: 1px solid #aaa;
 }
+
+
+.upload-form {
+  max-width: 1000px;
+  margin-top: 30px;
+}
+
+.form-control-centered {
+  /* max-width: 400px; */
+  margin: 0 auto;
+}
+
+.upload-frame {
+  width: 512px;
+  height: auto;
+  flex-direction: column;
+}
+
+.preview-image {
+  width: 512px;
+  height: 512px;
+  object-fit: contain;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}

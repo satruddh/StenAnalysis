@@ -3,7 +3,10 @@
 /static/main__.js
 /static/main_.js
 /static/updated_main.js
+/static/styles__.css
 
 /templates/index__.html
 
 *.pth
+*.ipynb
+*.ipynb_checkpoints

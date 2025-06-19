@@ -214,7 +214,7 @@ document.getElementById("uploadForm").addEventListener("submit", async (e) => {
   formData.append("image", file);
   formData.append("patient_id", patientId);
 
-  const response = await fetch("http://127.0.0.1:5000/api/inference", {
+  const response = await fetch("/api/inference", {
     method: "POST",
     body: formData,
   });
@@ -425,7 +425,7 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
   };
 
   try {
-    const response = await fetch("http://127.0.0.1:5000/api/export", {
+    const response = await fetch("/api/export", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -470,7 +470,7 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
   };
 
   try {
-    const response = await fetch("http://127.0.0.1:5000/api/save", {
+    const response = await fetch("/api/save", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -519,7 +519,7 @@ async function loadSidebarCases() {
 
 
 async function loadCase(patientId, timestamp) {
-  const res = await fetch(`http://127.0.0.1:5000/api/load_case/${patientId}/${timestamp}`);
+  const res = await fetch(`/api/load_case/${patientId}/${timestamp}`);
   const data = await res.json();
 
   activePatientId = patientId;
