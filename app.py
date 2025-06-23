@@ -95,11 +95,21 @@ def inference():
         file.save(dicom_path)
 
         try:
-            convert_dicom_to_png(
+            dicom_metadata = convert_dicom_to_png(
                 dicom_file_path=dicom_path,
                 output_png_path=input_png_path,
                 metadata_output_path=os.path.join(case_dir, "dicom_metadata.json")
             )
+
+            info.update({
+                "dicom_name": dicom_metadata.get("PatientName", ""),
+                "dicom_age": dicom_metadata.get("PatientAge", ""),
+                "dicom_sex": dicom_metadata.get("PatientSex", "")
+            })
+
+            with open(info_path, "w") as f:
+                json.dump(info, f, indent=2)
+
         except Exception as e:
             return jsonify({"error": f"Failed to process DICOM: {str(e)}"}), 500
     else:
@@ -129,12 +139,18 @@ def inference():
             f.write(base64.b64decode(output2_base64))
     
         print(f"Inference completed for patient {patient_id} at {timestamp}")
+
+        if os.path.exists(info_path):
+            with open(info_path) as f:
+                info = json.load(f)
+
         return jsonify({
             "message": "Inference successful",
             "output1_base64": output1_base64,
             "output2_base64": output2_base64,
             "input_base64": input_base64,
-            "timestamp": timestamp
+            "timestamp": timestamp,
+            "patient_info": info
         })
 
     except Exception as e:

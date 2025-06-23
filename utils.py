@@ -54,10 +54,21 @@ def run_inference(image_tensor):
 def convert_dicom_to_png(dicom_file_path, output_png_path, metadata_output_path=None):
     ds = pydicom.dcmread(dicom_file_path)
 
-    
     metadata = {}
-    for key in ["PatientID", "Modality", "StudyDate", "Rows", "Columns", "BitsStored",
-                "PhotometricInterpretation", "SamplesPerPixel", "PixelRepresentation"]:
+    for key in [
+        "PatientID",
+        "Modality",
+        "StudyDate",
+        "Rows",
+        "Columns",
+        "BitsStored",
+        "PhotometricInterpretation",
+        "SamplesPerPixel",
+        "PixelRepresentation",
+        "PatientName",
+        "PatientAge",
+        "PatientSex",
+    ]:
         metadata[key] = str(ds.get(key, "Not Available"))
 
     if metadata_output_path:
