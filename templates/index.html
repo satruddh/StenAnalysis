@@ -33,57 +33,85 @@
 
 
     <!-- Main Content -->
-    <div class="container pt-5 mt-5 glass-card flex-grow-1">
+    <div class="container pt-5 mt-5 glass-card flex-grow-1 main-content">
 
       <!-- Upload Section -->
-      <div id="uploadSection">
-        <form id="uploadForm" class="mx-auto upload-form text-center">
-          <div class="mb-3">
-            <label for="patientId" class="form-label">Patient ID</label>
-            <input type="text" class="form-control form-control-centered" id="patientId" required>
+      <form id="uploadForm" class="mx-auto upload-form text-center">
+        <div id="formCarousel" class="form-carousel">
+          <div class="form-step" id="detailsSection">
+            <div class="mb-3">
+              <label for="patientId" class="form-label">Patient ID</label>
+              <input type="text" class="form-control form-control-centered" id="patientId" required>
+            </div>
+            <div class="mb-3">
+              <label for="patientName" class="form-label">Patient Name</label>
+              <input type="text" class="form-control form-control-centered" id="patientName" required>
+            </div>
+            <div class="mb-3">
+              <label for="age" class="form-label">Age</label>
+              <input type="number" class="form-control form-control-centered" id="age" required>
+            </div>
+            <div class="mb-3">
+              <label for="weight" class="form-label">Weight</label>
+              <input type="text" class="form-control form-control-centered" id="weight">
+            </div>
+            <div class="mb-3">
+              <label for="sex" class="form-label">Sex</label>
+              <select id="sex" class="form-select form-control-centered">
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="bg" class="form-label">Blood Group</label>
+              <input type="text" class="form-control form-control-centered" id="bg">
+            </div>
+            <div class="mb-3">
+              <label for="doctorId" class="form-label">Doctor ID</label>
+              <input type="text" class="form-control form-control-centered" id="doctorId" required>
+            </div>
+            <button id="nextBtn" class="btn btn-primary mt-3">Next</button>
           </div>
-
-          <div class="mb-3">
-            <label for="doctorId" class="form-label">Doctor ID</label>
-            <input type="text" class="form-control form-control-centered" id="doctorId" required>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Input Type</label>
-            <div style="display: flex;">
-              <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="inputType" id="inputTypePng" value="png" checked>
-                <label class="form-check-label" for="inputTypePng">PNG</label>
-              </div>
-              <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="inputType" id="inputTypeDicom" value="dicom">
-                <label class="form-check-label" for="inputTypeDicom">DICOM</label>
+          <div class="form-step" id="uploadSection">
+            <div class="mb-3">
+              <label class="form-label">Input Type</label>
+              <div style="display: flex;">
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="inputType" id="inputTypePng" value="png" checked>
+                  <label class="form-check-label" for="inputTypePng">PNG</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="inputType" id="inputTypeDicom" value="dicom">
+                  <label class="form-check-label" for="inputTypeDicom">DICOM</label>
+                </div>
               </div>
             </div>
-          </div>
-
-          <div class="upload-frame mx-auto" id="uploadFrame">
-            <label for="imageInput" id="uploadLabel">
-              <img id="imagePreview" class="preview-image" src="{{ url_for('static', filename='placeholder.png') }}"
-                alt="Upload Image">
-            </label>
-            <input type="file" id="imageInput"  hidden>
-            <div id="uploadControls" class="d-none mt-2 d-flex justify-content-center gap-2">
-              <button type="button" class="btn btn-sm btn-secondary" id="changeImage">Change Image</button>
-              <button type="button" class="btn btn-sm btn-danger" id="removeImage">Remove Image</button>
+            <div class="upload-frame mx-auto" id="uploadFrame">
+              <label for="imageInput" id="uploadLabel">
+                <img id="imagePreview" class="preview-image" src="{{ url_for('static', filename='placeholder.png') }}"
+                  alt="Upload Image">
+              </label>
+              <input type="file" id="imageInput"  hidden>
+              <div id="uploadControls" class="d-none mt-2 d-flex justify-content-center gap-2">
+                <button type="button" class="btn btn-sm btn-secondary" id="changeImage">Change Image</button>
+                <button type="button" class="btn btn-sm btn-danger" id="removeImage">Remove Image</button>
+              </div>
             </div>
+            <button type="submit" class="btn btn-primary mt-3">Analyze</button>
           </div>
-
-          <button type="submit" class="btn btn-primary mt-3">Analyze</button>
-        </form>
-
-      </div>
+        </div>
+      </form>
 
       <!-- Patient Info -->
       <div id="patientInfo" class="d-none mt-2 mb-3">
         <div class="alert alert-info p-2">
-          <strong>Patient ID:</strong> <span id="displayPatientId"></span> &nbsp; | &nbsp;
-          <strong>Doctor ID:</strong> <span id="displayDoctorId"></span>
+          <strong>ID:</strong> <span id="displayPatientId"></span> &nbsp; | &nbsp;
+          <strong>Name:</strong> <span id="displayPatientName"></span> &nbsp; | &nbsp;
+          <strong>Age:</strong> <span id="displayAge"></span> &nbsp; | &nbsp;
+          <strong>Sex:</strong> <span id="displaySex"></span> &nbsp; | &nbsp;
+          <strong>BG:</strong> <span id="displayBg"></span> &nbsp; | &nbsp;
+          <strong>Doctor:</strong> <span id="displayDoctorId"></span>
         </div>
       </div>
 
