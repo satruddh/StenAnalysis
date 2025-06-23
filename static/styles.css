@@ -282,6 +282,7 @@ body {
 .upload-form {
   max-width: 1000px;
   margin-top: 30px;
+  overflow: hidden;
 }
 
 .form-control-centered {
@@ -301,4 +302,24 @@ body {
   object-fit: contain;
   border: 1px solid #ccc;
   border-radius: 8px;
+}
+
+.main-content {
+  margin-left: 250px;
+  width: calc(100% - 250px);
+}
+
+.form-carousel {
+  display: flex;
+  width: 200%;
+  transition: transform 0.5s ease;
+}
+
+.form-carousel.show-upload {
+  transform: translateX(-50%);
+}
+
+.form-step {
+  width: 100%;
+  padding: 0 10px;
 }
