@@ -38,44 +38,68 @@
       <!-- Upload Section -->
       <div id="uploadSection">
         <form id="uploadForm" class="mx-auto upload-form text-center">
-          <div class="mb-3">
-            <label for="patientId" class="form-label">Patient ID</label>
-            <input type="text" class="form-control form-control-centered" id="patientId" required>
-          </div>
-
-          <div class="mb-3">
-            <label for="doctorId" class="form-label">Doctor ID</label>
-            <input type="text" class="form-control form-control-centered" id="doctorId" required>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Input Type</label>
-            <div style="display: flex;">
-              <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="inputType" id="inputTypePng" value="png" checked>
-                <label class="form-check-label" for="inputTypePng">PNG</label>
+          <div id="formContainer" class="position-relative">
+            <div id="patientDetails" class="step-section">
+              <div class="mb-3">
+                <label for="patientId" class="form-label">Patient ID</label>
+                <input type="text" class="form-control form-control-centered" id="patientId" required>
               </div>
-              <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="inputType" id="inputTypeDicom" value="dicom">
-                <label class="form-check-label" for="inputTypeDicom">DICOM</label>
+              <div class="mb-3">
+                <label for="patientName" class="form-label">Patient Name</label>
+                <input type="text" class="form-control form-control-centered" id="patientName" required>
               </div>
+              <div class="mb-3">
+                <label for="patientAge" class="form-label">Age</label>
+                <input type="number" class="form-control form-control-centered" id="patientAge" required>
+              </div>
+              <div class="mb-3">
+                <label for="patientWeight" class="form-label">Weight</label>
+                <input type="number" class="form-control form-control-centered" id="patientWeight" required>
+              </div>
+              <div class="mb-3">
+                <label for="patientSex" class="form-label">Sex</label>
+                <input type="text" class="form-control form-control-centered" id="patientSex" required>
+              </div>
+              <div class="mb-3">
+                <label for="patientBG" class="form-label">Blood Group</label>
+                <input type="text" class="form-control form-control-centered" id="patientBG" required>
+              </div>
+              <div class="mb-3">
+                <label for="doctorId" class="form-label">Doctor ID</label>
+                <input type="text" class="form-control form-control-centered" id="doctorId" required>
+              </div>
+              <button type="button" id="nextBtn" class="btn btn-primary mt-3">Next</button>
+            </div>
+            <div id="imageSection" class="step-section">
+              <div class="mb-3">
+                <label class="form-label">Input Type</label>
+                <div style="display: flex;">
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="inputType" id="inputTypePng" value="png" checked>
+                    <label class="form-check-label" for="inputTypePng">PNG</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="inputType" id="inputTypeDicom" value="dicom">
+                    <label class="form-check-label" for="inputTypeDicom">DICOM</label>
+                  </div>
+                </div>
+              </div>
+              <div class="upload-frame mx-auto" id="uploadFrame">
+                <label for="imageInput" id="uploadLabel">
+                  <img id="imagePreview" class="preview-image" src="{{ url_for('static', filename='placeholder.png') }}" alt="Upload Image">
+                </label>
+                <input type="file" id="imageInput" hidden>
+                <div id="uploadControls" class="d-none mt-2 d-flex justify-content-center gap-2">
+                  <button type="button" class="btn btn-sm btn-secondary" id="changeImage">Change Image</button>
+                  <button type="button" class="btn btn-sm btn-danger" id="removeImage">Remove Image</button>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary mt-3">Analyze</button>
             </div>
           </div>
-
-          <div class="upload-frame mx-auto" id="uploadFrame">
-            <label for="imageInput" id="uploadLabel">
-              <img id="imagePreview" class="preview-image" src="{{ url_for('static', filename='placeholder.png') }}"
-                alt="Upload Image">
-            </label>
-            <input type="file" id="imageInput"  hidden>
-            <div id="uploadControls" class="d-none mt-2 d-flex justify-content-center gap-2">
-              <button type="button" class="btn btn-sm btn-secondary" id="changeImage">Change Image</button>
-              <button type="button" class="btn btn-sm btn-danger" id="removeImage">Remove Image</button>
-            </div>
-          </div>
-
-          <button type="submit" class="btn btn-primary mt-3">Analyze</button>
         </form>
+
+      </div>
 
       </div>
 

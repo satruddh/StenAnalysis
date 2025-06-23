@@ -59,11 +59,33 @@ def inference():
 
     file = request.files["image"]
     patient_id = request.form["patient_id"]
+    doctor_id = request.form.get("doctor_id", "")
+    patient_name = request.form.get("patient_name", "")
+    patient_age = request.form.get("patient_age", "")
+    patient_weight = request.form.get("patient_weight", "")
+    patient_sex = request.form.get("patient_sex", "")
+    patient_bg = request.form.get("patient_bg", "")
     input_type = request.form["input_type"].lower()
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
-    case_dir = os.path.join(BASE_CASE_DIR, patient_id, f"case_{timestamp}")
+
+    patient_dir = os.path.join(BASE_CASE_DIR, patient_id)
+    case_dir = os.path.join(patient_dir, f"case_{timestamp}")
     os.makedirs(case_dir, exist_ok=True)
+
+    index_path = os.path.join(patient_dir, "index.json")
+    index_data = {"patient_id": patient_id, "cases": []}
+    if os.path.exists(index_path):
+        with open(index_path) as f:
+            index_data = json.load(f)
+    index_data.update({
+        "patient_name": patient_name,
+        "age": patient_age,
+        "weight": patient_weight,
+        "sex": patient_sex,
+        "blood_group": patient_bg
+    })
+    with open(index_path, "w") as f:
+        json.dump(index_data, f, indent=2)
 
     input_png_path = os.path.join(case_dir, "input.png")
 

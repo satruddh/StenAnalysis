@@ -15,6 +15,23 @@ let mask2 = null;
 let pointAnnotations = [];
 let polygonAnnotations = [];
 
+const formContainer = document.getElementById("formContainer");
+const nextBtn = document.getElementById("nextBtn");
+const patientIdInput = document.getElementById("patientId");
+const patientNameInput = document.getElementById("patientName");
+const patientAgeInput = document.getElementById("patientAge");
+const patientWeightInput = document.getElementById("patientWeight");
+const patientSexInput = document.getElementById("patientSex");
+const patientBGInput = document.getElementById("patientBG");
+const doctorIdInput = document.getElementById("doctorId");
+nextBtn.addEventListener("click", () => {
+  if (patientIdInput.value && patientNameInput.value && patientAgeInput.value && patientWeightInput.value && patientSexInput.value && patientBGInput.value && doctorIdInput.value) {
+    formContainer.classList.add("show-upload");
+  } else {
+    alert("Please fill all patient details");
+  }
+});
+
 imageInput.addEventListener("change", () => {
   const file = imageInput.files[0];
   let inputType = document.querySelector('input[name="inputType"]:checked').value; 
@@ -217,8 +234,20 @@ document.getElementById("uploadForm").addEventListener("submit", async (e) => {
   const file = imageInput.files[0];
   if (!file || !patientId) return;
 
+  const patientName = patientNameInput.value;
+  const patientAge = patientAgeInput.value;
+  const patientWeight = patientWeightInput.value;
+  const patientSex = patientSexInput.value;
+  const patientBG = patientBGInput.value;
+
   const formData = new FormData();
   formData.append("image", file);
+  formData.append("patient_name", patientName);
+  formData.append("patient_age", patientAge);
+  formData.append("patient_weight", patientWeight);
+  formData.append("patient_sex", patientSex);
+  formData.append("patient_bg", patientBG);
+
   formData.append("patient_id", patientId);
   formData.append("doctor_id", doctorId);
   const inputType = document.querySelector('input[name="inputType"]:checked').value;

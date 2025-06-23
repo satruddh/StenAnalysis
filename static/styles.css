@@ -302,3 +302,28 @@ body {
   border: 1px solid #ccc;
   border-radius: 8px;
 }
+#formContainer {
+  position: relative;
+  overflow: hidden;
+  min-height: 550px;
+  width: 100%;
+}
+.step-section {
+  width: 100%;
+  transition: transform 0.5s ease;
+}
+#patientDetails {
+  transform: translateX(0);
+}
+#imageSection {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateX(100%);
+}
+#formContainer.show-upload #patientDetails {
+  transform: translateX(-100%);
+}
+#formContainer.show-upload #imageSection {
+  transform: translateX(0);
+}
