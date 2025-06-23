@@ -1,6 +1,4 @@
 
-
-
 const imageInput = document.getElementById("imageInput");
 const imagePreview = document.getElementById("imagePreview");
 const uploadControls = document.getElementById("uploadControls");
@@ -9,6 +7,7 @@ const removeImageBtn = document.getElementById("removeImage");
 
 const nextBtn = document.getElementById("nextBtn");
 const formCarousel = document.getElementById("formCarousel");
+const backBtn = document.getElementById("backBtn");
 
 const patientNameInput = document.getElementById("patientName");
 const ageInput = document.getElementById("age");
@@ -52,6 +51,11 @@ removeImageBtn.addEventListener("click", () => {
 nextBtn.addEventListener("click", (e) => {
   e.preventDefault();
   formCarousel.classList.add("show-upload");
+});
+
+backBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+  formCarousel.classList.remove("show-upload");
 });
 
 function loadImage(src) {
@@ -274,6 +278,7 @@ document.getElementById("uploadForm").addEventListener("submit", async (e) => {
   document.getElementById("saveBtn").classList.remove("d-none");
   document.getElementById("patientInfo").classList.remove("d-none");
   formCarousel.classList.remove("show-upload");
+  document.getElementById("uploadForm").classList.add("d-none");
   document.getElementById("displayPatientId").textContent = patientId;
   document.getElementById("displayPatientName").textContent = patientName;
   document.getElementById("displayAge").textContent = age;
@@ -533,7 +538,14 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
 });
 
 
-window.addEventListener("DOMContentLoaded", loadSidebarCases);
+window.addEventListener("DOMContentLoaded", () => {
+  patientIdInput.value = generatePatientId();
+  loadSidebarCases();
+});
+
+function generatePatientId() {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
 
 async function loadSidebarCases() {
   const res = await fetch(`/api/all_cases`);
@@ -581,6 +593,7 @@ async function loadCase(patientId, timestamp) {
   document.getElementById("patientInfo").classList.remove("d-none");
   document.getElementById("saveBtn").classList.remove("d-none");
   formCarousel.classList.remove("show-upload");
+  document.getElementById("uploadForm").classList.add("d-none");
   document.getElementById("displayPatientId").textContent = patientId;
   document.getElementById("displayPatientName").textContent = data.patient_info?.name || "";
   document.getElementById("displayAge").textContent = data.patient_info?.age || "";
@@ -588,7 +601,6 @@ async function loadCase(patientId, timestamp) {
   document.getElementById("displayBg").textContent = data.patient_info?.bg || "";
   document.getElementById("displayDoctorId").textContent = data.doctor_id || "N/A";
 
-  console.log("Loaded case for patient %s at timestamp %s", patientId, timestamp, doctorId);
 
   const opacity1 = parseFloat(document.getElementById("opacity1").value);
   const opacity2 = parseFloat(document.getElementById("opacity2").value);
