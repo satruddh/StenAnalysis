@@ -61,8 +61,29 @@ def inference():
     patient_id = request.form["patient_id"]
     input_type = request.form["input_type"].lower()
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
-    case_dir = os.path.join(BASE_CASE_DIR, patient_id, f"case_{timestamp}")
+
+    patient_dir = os.path.join(BASE_CASE_DIR, patient_id)
+    os.makedirs(patient_dir, exist_ok=True)
+
+    info_path = os.path.join(patient_dir, "patient_info.json")
+    info = {}
+    if os.path.exists(info_path):
+        with open(info_path) as f:
+            info = json.load(f)
+
+    info.update({
+        "patient_id": patient_id,
+        "name": request.form.get("name", ""),
+        "age": request.form.get("age", ""),
+        "weight": request.form.get("weight", ""),
+        "sex": request.form.get("sex", ""),
+        "bg": request.form.get("bg", "")
+    })
+
+    with open(info_path, "w") as f:
+        json.dump(info, f, indent=2)
+
+    case_dir = os.path.join(patient_dir, f"case_{timestamp}")
     os.makedirs(case_dir, exist_ok=True)
 
     input_png_path = os.path.join(case_dir, "input.png")
@@ -293,6 +314,7 @@ def load_case(patient_id, timestamp):
     notes_path = os.path.join(case_dir, "notes.txt")
     annotations_path = os.path.join(case_dir, "annotations.json")
     index_path = os.path.join(BASE_CASE_DIR, patient_id, "index.json")
+    info_path = os.path.join(BASE_CASE_DIR, patient_id, "patient_info.json")
 
     doctor_id = ""
     if os.path.exists(index_path):
@@ -318,6 +340,10 @@ def load_case(patient_id, timestamp):
         "timestamp": timestamp,
         "doctor_id": doctor_id
     }
+
+    if os.path.exists(info_path):
+        with open(info_path) as f:
+            response["patient_info"] = json.load(f)
 
     if os.path.exists(notes_path):
         with open(notes_path) as f:
