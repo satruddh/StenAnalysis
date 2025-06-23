@@ -223,10 +223,12 @@ function setupControls(canvasId, baseImg, maskImg, viewName, opacityId, smoothId
     drawCanvas(canvasId, baseImg, maskImg, op, mode, isSmooth, col);
   }
 
-  radios.forEach(r => r.addEventListener("change", redraw));
-  slider.addEventListener("input", redraw);
-  color.addEventListener("input", redraw);
-  smooth.addEventListener("change", redraw);
+  radios.forEach(r => (r.onchange = redraw));
+  slider.oninput = redraw;
+  color.oninput = redraw;
+  smooth.onchange = redraw;
+
+  redraw();
 }
 
 document.getElementById("uploadForm").addEventListener("submit", async (e) => {
@@ -280,9 +282,16 @@ document.getElementById("uploadForm").addEventListener("submit", async (e) => {
   formCarousel.classList.remove("show-upload");
   document.getElementById("uploadForm").classList.add("d-none");
   document.getElementById("displayPatientId").textContent = patientId;
-  document.getElementById("displayPatientName").textContent = patientName;
-  document.getElementById("displayAge").textContent = age;
-  document.getElementById("displaySex").textContent = sex;
+  const inf = data.patient_info || {};
+  const nameParts = [patientName];
+  if (inf.dicom_name) nameParts.push(inf.dicom_name);
+  const ageParts = [age];
+  if (inf.dicom_age) ageParts.push(inf.dicom_age);
+  const sexParts = [sex];
+  if (inf.dicom_sex) sexParts.push(inf.dicom_sex);
+  document.getElementById("displayPatientName").textContent = nameParts.filter(Boolean).join(", ");
+  document.getElementById("displayAge").textContent = ageParts.filter(Boolean).join(", ");
+  document.getElementById("displaySex").textContent = sexParts.filter(Boolean).join(", ");
   document.getElementById("displayBg").textContent = bg;
   document.getElementById("displayDoctorId").textContent = doctorId;
 
@@ -595,10 +604,17 @@ async function loadCase(patientId, timestamp) {
   formCarousel.classList.remove("show-upload");
   document.getElementById("uploadForm").classList.add("d-none");
   document.getElementById("displayPatientId").textContent = patientId;
-  document.getElementById("displayPatientName").textContent = data.patient_info?.name || "";
-  document.getElementById("displayAge").textContent = data.patient_info?.age || "";
-  document.getElementById("displaySex").textContent = data.patient_info?.sex || "";
-  document.getElementById("displayBg").textContent = data.patient_info?.bg || "";
+  const info = data.patient_info || {};
+  const nameArr = [info.name];
+  if (info.dicom_name) nameArr.push(info.dicom_name);
+  const ageArr = [info.age];
+  if (info.dicom_age) ageArr.push(info.dicom_age);
+  const sexArr = [info.sex];
+  if (info.dicom_sex) sexArr.push(info.dicom_sex);
+  document.getElementById("displayPatientName").textContent = nameArr.filter(Boolean).join(", ");
+  document.getElementById("displayAge").textContent = ageArr.filter(Boolean).join(", ");
+  document.getElementById("displaySex").textContent = sexArr.filter(Boolean).join(", ");
+  document.getElementById("displayBg").textContent = info.bg || "";
   document.getElementById("displayDoctorId").textContent = data.doctor_id || "N/A";
 
 
@@ -612,6 +628,10 @@ async function loadCase(patientId, timestamp) {
 
   drawCanvas("canvas1", inputImg, mask1, opacity1, "overlay", smooth1, overlayColor1);
   drawCanvas("canvas2", inputImg, mask2, opacity2, "overlay", smooth2, overlayColor2);
+
+  setupControls("canvas1", inputImg, mask1, "view1", "opacity1", "smooth1", "overlayColor1");
+  setupControls("canvas2", inputImg, mask2, "view2", "opacity2", "smooth2", "overlayColor2");
+  setupLegendColorSync();
 }
 
 document.getElementById("newCaseButton").addEventListener("click", () => {
