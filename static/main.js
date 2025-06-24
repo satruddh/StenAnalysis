@@ -299,6 +299,7 @@ document.getElementById("uploadForm").addEventListener("submit", async (e) => {
   document.getElementById("displaySex").textContent = sexParts.filter(Boolean).join(", ");
   document.getElementById("displayBg").textContent = bg;
   document.getElementById("displayDoctorId").textContent = currentDoctorId;
+  document.getElementById("displayLastEditor").textContent = currentDoctorId;
 
   inputImg = await loadImage("data:image/png;base64," + data.input_base64);
   mask1 = await loadImage("data:image/png;base64," + data.output1_base64);
@@ -620,7 +621,11 @@ async function loadSidebarCases() {
   data.cases.forEach(item => {
     const entry = document.createElement("div");
     entry.className = "case-entry border-bottom py-2";
-    entry.innerText = `Patient: ${item.patient_id} | Case: ${item.timestamp}`;
+    let text = `Patient: ${item.patient_id} | Case: ${item.timestamp}`;
+    if (item.last_editor) {
+      text += ` (last edit: ${item.last_editor})`;
+    }
+    entry.innerText = text;
     entry.style.cursor = "pointer";
     entry.onclick = () => loadCase(item.patient_id, item.timestamp);
     caseList.appendChild(entry);
@@ -668,6 +673,7 @@ async function loadCase(patientId, timestamp) {
   document.getElementById("displaySex").textContent = sexArr.filter(Boolean).join(", ");
   document.getElementById("displayBg").textContent = info.bg || "";
   document.getElementById("displayDoctorId").textContent = currentDoctorId || "N/A";
+  document.getElementById("displayLastEditor").textContent = data.last_editor || currentDoctorId || "N/A";
 
 
   const opacity1 = parseFloat(document.getElementById("opacity1").value);
@@ -684,6 +690,9 @@ async function loadCase(patientId, timestamp) {
   setupControls("canvas1", inputImg, mask1, "view1", "opacity1", "smooth1", "overlayColor1");
   setupControls("canvas2", inputImg, mask2, "view2", "opacity2", "smooth2", "overlayColor2");
   setupLegendColorSync();
+
+  document.getElementById("canvas1").onclick = () => setupFabricAnnotation("canvas1");
+  document.getElementById("canvas2").onclick = () => setupFabricAnnotation("canvas2");
 }
 
 document.getElementById("newCaseButton").addEventListener("click", () => {

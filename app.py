@@ -298,18 +298,25 @@ def save_analysis():
                 index_data = json.load(f)
 
         
-        index_data["cases"] = [
-            entry for entry in index_data["cases"]
-            if not (entry["timestamp"] == timestamp and entry["doctor_id"] == doctor_id)
-        ]
+        found = False
+        for entry in index_data.get("cases", []):
+            if entry.get("timestamp") == timestamp:
+                entry["notes"] = notes
+                entry["annotations"] = "annotations.json"
+                entry["annotated_images"] = annotated_files
+                entry["last_editor"] = doctor_id
+                found = True
+                break
 
-        index_data["cases"].append({
-            "timestamp": timestamp,
-            "doctor_id": doctor_id,
-            "notes": notes,
-            "annotations": "annotations.json",
-            "annotated_images": annotated_files
-        })
+        if not found:
+            index_data.setdefault("cases", []).append({
+                "timestamp": timestamp,
+                "doctor_id": doctor_id,
+                "last_editor": doctor_id,
+                "notes": notes,
+                "annotations": "annotations.json",
+                "annotated_images": annotated_files
+            })
 
         with open(index_path, "w") as f:
             json.dump(index_data, f, indent=2)
@@ -336,10 +343,17 @@ def list_cases(patient_id):
         if os.path.exists(notes_path):
             with open(notes_path) as f:
                 note = f.read().strip().split("\n")[0]  
-        cases.append({
-            "timestamp": folder.replace("case_", ""),
-            "note": note
-        })
+        case_entry = {"timestamp": folder.replace("case_", ""), "note": note}
+        index_path = os.path.join(patient_dir, "index.json")
+        if os.path.exists(index_path):
+            with open(index_path) as idxf:
+                idx = json.load(idxf)
+                for ce in idx.get("cases", []):
+                    if ce.get("timestamp") == case_entry["timestamp"]:
+                        case_entry["doctor_id"] = ce.get("doctor_id")
+                        case_entry["last_editor"] = ce.get("last_editor", ce.get("doctor_id"))
+                        break
+        cases.append(case_entry)
 
     return jsonify({"cases": cases})
 
@@ -357,12 +371,14 @@ def load_case(patient_id, timestamp):
     info_path = os.path.join(BASE_CASE_DIR, patient_id, "patient_info.json")
 
     doctor_id = ""
+    last_editor = ""
     if os.path.exists(index_path):
         with open(index_path) as f:
             data = json.load(f)
             for entry in data.get("cases", []):
                 if entry["timestamp"] == timestamp:
                     doctor_id = entry.get("doctor_id", "")
+                    last_editor = entry.get("last_editor", doctor_id)
                     break
 
     def encode_image(path):
@@ -378,7 +394,8 @@ def load_case(patient_id, timestamp):
         "notes": "",
         "annotations": [],
         "timestamp": timestamp,
-        "doctor_id": doctor_id
+        "doctor_id": doctor_id,
+        "last_editor": last_editor
     }
 
     if os.path.exists(info_path):
@@ -455,7 +472,9 @@ def all_cases():
                         all_data.append({
                             "patient_id": patient_id,
                             "timestamp": case["timestamp"],
-                            "note": case.get("notes", "").split("\n")[0]
+                            "note": case.get("notes", "").split("\n")[0],
+                            "doctor_id": case.get("doctor_id"),
+                            "last_editor": case.get("last_editor", case.get("doctor_id"))
                         })
         except Exception as e:
             print(f"Error reading index.json for {patient_id}: {e}")

@@ -307,8 +307,8 @@ body {
 }
 
 .main-content {
-  margin-left: 250px;
-  width: calc(100% - 250px);
+  margin-left: 260px;
+  width: calc(100% - 260px);
 }
 
 .form-carousel {
