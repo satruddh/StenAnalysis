@@ -9,3 +9,5 @@
     ```
 - ALternatively, if just want to test, you can issue the following command: 
     `python app.py`
+
+When running for the first time, open `http://localhost:5000/login` and register a doctor account. A unique doctor ID will be generated automatically. Use this ID and password to log in and access the analysis dashboard.

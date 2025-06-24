@@ -14,8 +14,10 @@ const ageInput = document.getElementById("age");
 const weightInput = document.getElementById("weight");
 const sexInput = document.getElementById("sex");
 const bgInput = document.getElementById("bg");
-const doctorIdInput = document.getElementById("doctorId");
 const patientIdInput = document.getElementById("patientId");
+const shareBtn = document.getElementById("shareBtn");
+
+let currentDoctorId = "";
 
 let activeTimestamp = null;
 let activePatientId = null;
@@ -24,6 +26,8 @@ let mask1 = null;
 let mask2 = null;
 let pointAnnotations = [];
 let polygonAnnotations = [];
+const shareDoctorInput = document.getElementById("shareDoctor");
+const doctorSuggestions = document.getElementById("doctorSuggestions");
 
 imageInput.addEventListener("change", () => {
   const file = imageInput.files[0];
@@ -235,7 +239,7 @@ document.getElementById("uploadForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const patientId = document.getElementById("patientId").value;
-  const doctorId = doctorIdInput.value || "UnknownDoctor";
+  const doctorId = currentDoctorId || "UnknownDoctor";
   const patientName = patientNameInput.value || "";
   const age = ageInput.value || "";
   const weight = weightInput.value || "";
@@ -247,7 +251,6 @@ document.getElementById("uploadForm").addEventListener("submit", async (e) => {
   const formData = new FormData();
   formData.append("image", file);
   formData.append("patient_id", patientId);
-  formData.append("doctor_id", doctorId);
   formData.append("name", patientName);
   formData.append("age", age);
   formData.append("weight", weight);
@@ -270,6 +273,7 @@ document.getElementById("uploadForm").addEventListener("submit", async (e) => {
 
   activePatientId = patientId;
   activeTimestamp = data.timestamp;
+  currentDoctorId = data.doctor_id || currentDoctorId;
   loadSidebarCases(patientId);
 
   document.getElementById("results").classList.remove("d-none");
@@ -277,6 +281,7 @@ document.getElementById("uploadForm").addEventListener("submit", async (e) => {
   document.getElementById("legendPanel").classList.remove("d-none");
   document.getElementById("doctorNotesPanel").classList.remove("d-none");
   document.getElementById("exportBtn").classList.remove("d-none");
+  shareBtn.classList.remove("d-none");
   document.getElementById("saveBtn").classList.remove("d-none");
   document.getElementById("patientInfo").classList.remove("d-none");
   formCarousel.classList.remove("show-upload");
@@ -293,7 +298,7 @@ document.getElementById("uploadForm").addEventListener("submit", async (e) => {
   document.getElementById("displayAge").textContent = ageParts.filter(Boolean).join(", ");
   document.getElementById("displaySex").textContent = sexParts.filter(Boolean).join(", ");
   document.getElementById("displayBg").textContent = bg;
-  document.getElementById("displayDoctorId").textContent = doctorId;
+  document.getElementById("displayDoctorId").textContent = currentDoctorId;
 
   inputImg = await loadImage("data:image/png;base64," + data.input_base64);
   mask1 = await loadImage("data:image/png;base64," + data.output1_base64);
@@ -460,7 +465,7 @@ setupLegendColorSync();
 
 document.getElementById("exportBtn").addEventListener("click", async () => {
   const generalNotes = document.getElementById("generalNotes").value || "";
-  const doctorId = document.getElementById("doctorId")?.value || "UnknownDoctor";
+  const doctorId = currentDoctorId || "UnknownDoctor";
 
   
   const canvas1DataUrl = document.getElementById("canvas1").toDataURL("image/png");
@@ -507,7 +512,7 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
 
 document.getElementById("saveBtn").addEventListener("click", async () => {
   const generalNotes = document.getElementById("generalNotes").value || "";
-  const doctorId = document.getElementById("doctorId")?.value || "UnknownDoctor";
+  const doctorId = currentDoctorId || "UnknownDoctor";
 
   const canvas1DataUrl = document.getElementById("canvas1").toDataURL("image/png");
   const canvas2DataUrl = document.getElementById("canvas2").toDataURL("image/png");
@@ -552,6 +557,51 @@ window.addEventListener("DOMContentLoaded", () => {
   loadSidebarCases();
 });
 
+shareDoctorInput?.addEventListener("input", async () => {
+  const q = shareDoctorInput.value.trim();
+  doctorSuggestions.innerHTML = "";
+  if (!q) return;
+  const res = await fetch(`/api/search_doctors?q=${encodeURIComponent(q)}`);
+  const data = await res.json();
+  data.forEach(d => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "list-group-item list-group-item-action";
+    btn.textContent = `${d.id} - ${d.name}`;
+    btn.onclick = () => {
+      shareDoctorInput.value = `${d.id} - ${d.name}`;
+      shareDoctorInput.dataset.id = d.id;
+      doctorSuggestions.innerHTML = "";
+    };
+    doctorSuggestions.appendChild(btn);
+  });
+});
+
+document.getElementById("shareConfirm")?.addEventListener("click", async () => {
+  const targetId = shareDoctorInput.dataset.id;
+  if (!targetId) return;
+  const payload = {
+    patient_id: activePatientId,
+    timestamp: activeTimestamp,
+    doctor_id: targetId
+  };
+  const res = await fetch("/api/share", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  const result = await res.json();
+  if (res.ok) {
+    alert("Shared successfully!");
+    const modalEl = document.getElementById("shareModal");
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    modal.hide();
+    loadSidebarCases();
+  } else {
+    alert(result.error || "Share failed");
+  }
+});
+
 function generatePatientId() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
@@ -586,6 +636,7 @@ async function loadCase(patientId, timestamp) {
 
   activePatientId = patientId;
   activeTimestamp = timestamp;
+  currentDoctorId = data.doctor_id || currentDoctorId;
   polygonAnnotations = data.annotations || [];
 
   inputImg = await loadImage("data:image/png;base64," + data.input_base64);
@@ -599,6 +650,7 @@ async function loadCase(patientId, timestamp) {
   document.getElementById("legendPanel").classList.remove("d-none");
   document.getElementById("doctorNotesPanel").classList.remove("d-none");
   document.getElementById("exportBtn").classList.remove("d-none");
+  shareBtn.classList.remove("d-none");
   document.getElementById("patientInfo").classList.remove("d-none");
   document.getElementById("saveBtn").classList.remove("d-none");
   formCarousel.classList.remove("show-upload");
@@ -615,7 +667,7 @@ async function loadCase(patientId, timestamp) {
   document.getElementById("displayAge").textContent = ageArr.filter(Boolean).join(", ");
   document.getElementById("displaySex").textContent = sexArr.filter(Boolean).join(", ");
   document.getElementById("displayBg").textContent = info.bg || "";
-  document.getElementById("displayDoctorId").textContent = data.doctor_id || "N/A";
+  document.getElementById("displayDoctorId").textContent = currentDoctorId || "N/A";
 
 
   const opacity1 = parseFloat(document.getElementById("opacity1").value);

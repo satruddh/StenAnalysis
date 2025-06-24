@@ -1,5 +1,5 @@
 from datetime import datetime
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session, redirect, url_for
 import os
 import numpy as np
 import io
@@ -12,9 +12,25 @@ import json
 from fpdf import FPDF
 from flask import send_file
 from flask import render_template
+import sqlite3
+import hashlib
+import uuid
 
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
+app.secret_key = "change-this-key"
+DB_PATH = "doctors.db"
+
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(
+        "CREATE TABLE IF NOT EXISTS doctors (id TEXT PRIMARY KEY, name TEXT, password TEXT)"
+    )
+    conn.commit()
+    conn.close()
+
+init_db()
 UPLOAD_FOLDER = "uploads"
 BASE_CASE_DIR = "cases"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -26,6 +42,13 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     return response
+
+@app.before_request
+def require_login():
+    if request.endpoint in {"login", "register", "static"} or request.endpoint is None:
+        return
+    if "doctor_id" not in session:
+        return redirect(url_for("login"))
 
 def tensor_to_base64(tensor):
     """Convert a PyTorch tensor to a base64 image string."""
@@ -150,7 +173,8 @@ def inference():
             "output2_base64": output2_base64,
             "input_base64": input_base64,
             "timestamp": timestamp,
-            "patient_info": info
+            "patient_info": info,
+            "doctor_id": session.get("doctor_id", "")
         })
 
     except Exception as e:
@@ -163,7 +187,7 @@ def export_analysis():
         data = request.get_json()
         patient_id = data["patient_id"]
         timestamp = data["timestamp"]
-        doctor_id = data["doctor_id"]
+        doctor_id = session.get("doctor_id", "")
         notes = data["notes"]
         annotations = data["annotations"]
         annotated_images = data["images"]
@@ -237,7 +261,7 @@ def save_analysis():
         data = request.get_json()
         patient_id = data["patient_id"]
         timestamp = data["timestamp"]
-        doctor_id = data["doctor_id"]
+        doctor_id = session.get("doctor_id", "")
         notes = data["notes"]
         annotations = data["annotations"]
         annotated_images = data["images"]
@@ -371,8 +395,52 @@ def load_case(patient_id, timestamp):
 
     return jsonify(response)
 
+
+@app.route("/api/search_doctors")
+def search_doctors():
+    q = request.args.get("q", "")
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute("SELECT id, name FROM doctors WHERE id LIKE ? OR name LIKE ? LIMIT 10", (f"%{q}%", f"%{q}%"))
+    rows = cur.fetchall()
+    conn.close()
+    return jsonify([{"id": r[0], "name": r[1]} for r in rows])
+
+
+@app.route("/api/share", methods=["POST"])
+def share_case():
+    data = request.get_json()
+    patient_id = data.get("patient_id")
+    timestamp = data.get("timestamp")
+    target = data.get("doctor_id")
+    if not target:
+        return jsonify({"error": "doctor_id required"}), 400
+
+    index_path = os.path.join(BASE_CASE_DIR, patient_id, "index.json")
+    if not os.path.exists(index_path):
+        return jsonify({"error": "case not found"}), 404
+
+    with open(index_path) as f:
+        index_data = json.load(f)
+    found = False
+    for entry in index_data.get("cases", []):
+        if entry["timestamp"] == timestamp:
+            entry.setdefault("shared_with", [])
+            if target not in entry["shared_with"]:
+                entry["shared_with"].append(target)
+            found = True
+            break
+    if not found:
+        return jsonify({"error": "case not found"}), 404
+    with open(index_path, "w") as f:
+        json.dump(index_data, f, indent=2)
+    return jsonify({"message": "shared"})
+
 @app.route("/api/all_cases")
 def all_cases():
+    doctor_id = session.get("doctor_id")
+    if not doctor_id:
+        return jsonify({"cases": []})
     all_data = []
     for patient_id in os.listdir(BASE_CASE_DIR):
         patient_path = os.path.join(BASE_CASE_DIR, patient_id)
@@ -383,14 +451,62 @@ def all_cases():
             with open(index_path) as f:
                 index = json.load(f)
                 for case in index.get("cases", []):
-                    all_data.append({
-                        "patient_id": patient_id,
-                        "timestamp": case["timestamp"],
-                        "note": case.get("notes", "").split("\n")[0]  
-                    })
+                    if case.get("doctor_id") == doctor_id or doctor_id in case.get("shared_with", []):
+                        all_data.append({
+                            "patient_id": patient_id,
+                            "timestamp": case["timestamp"],
+                            "note": case.get("notes", "").split("\n")[0]
+                        })
         except Exception as e:
             print(f"Error reading index.json for {patient_id}: {e}")
     return jsonify({"cases": sorted(all_data, key=lambda x: x["timestamp"], reverse=True)})
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    message = request.args.get("message")
+    if request.method == "POST":
+        doctor_id = request.form.get("doctor_id")
+        password = request.form.get("password", "")
+        conn = sqlite3.connect(DB_PATH)
+        cur = conn.cursor()
+        cur.execute("SELECT password, name FROM doctors WHERE id=?", (doctor_id,))
+        row = cur.fetchone()
+        conn.close()
+        if row and row[0] == hashlib.sha256(password.encode()).hexdigest():
+            session["doctor_id"] = doctor_id
+            session["doctor_name"] = row[1]
+            return redirect(url_for("home"))
+        return render_template("login.html", error="Invalid credentials")
+    return render_template("login.html", message=message)
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        name = request.form.get("name")
+        password = request.form.get("password", "")
+        hashed = hashlib.sha256(password.encode()).hexdigest()
+        conn = sqlite3.connect(DB_PATH)
+        cur = conn.cursor()
+
+        doctor_id = uuid.uuid4().hex[:8].upper()
+        while cur.execute("SELECT 1 FROM doctors WHERE id=?", (doctor_id,)).fetchone():
+            doctor_id = uuid.uuid4().hex[:8].upper()
+
+        cur.execute("INSERT INTO doctors (id, name, password) VALUES (?,?,?)", (doctor_id, name, hashed))
+        conn.commit()
+        conn.close()
+
+        message = f"Registered successfully! Your Doctor ID is {doctor_id}"
+        return redirect(url_for("login", message=message))
+    return render_template("register.html")
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
 
 
 
