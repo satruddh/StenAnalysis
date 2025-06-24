@@ -16,8 +16,8 @@
       <span class="navbar-brand mb-0 h4 text-dark">
         StenAnalysis
       </span>
-      <div class="d-flex align-items-center gap-3">
-        <span class="text-dark">Logged in as {{ session.get('doctor_id') }}</span>
+      <div class="d-flex align-items-center gap-3" style="width:auto;">
+        <span class="text-dark">{{ session.get('doctor_name') }}</span>
         <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('logout') }}">Logout</a>
       </div>
     </div>

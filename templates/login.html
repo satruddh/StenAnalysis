@@ -12,6 +12,9 @@
     {% if error %}
     <div class="alert alert-danger">{{ error }}</div>
     {% endif %}
+    {% if message %}
+    <div class="alert alert-success">{{ message }}</div>
+    {% endif %}
     <form method="post">
       <div class="mb-3">
         <label for="doctorId" class="form-label">Doctor ID</label>

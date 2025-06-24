@@ -14,6 +14,7 @@ from flask import send_file
 from flask import render_template
 import sqlite3
 import hashlib
+import uuid
 
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
@@ -476,15 +477,19 @@ def login():
             session["doctor_name"] = row[1]
             return redirect(url_for("home"))
         return render_template("login.html", error="Invalid credentials")
-    return render_template("login.html")
+    message = None
+    if request.args.get("registered"):
+        doctor_id = request.args.get("doctor_id", "")
+        message = f"Registration successful. Your Doctor ID is {doctor_id}."
+    return render_template("login.html", message=message)
 
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        doctor_id = request.form.get("doctor_id")
         name = request.form.get("name")
         password = request.form.get("password", "")
+        doctor_id = uuid.uuid4().hex[:8]
         hashed = hashlib.sha256(password.encode()).hexdigest()
         try:
             conn = sqlite3.connect(DB_PATH)
@@ -492,9 +497,9 @@ def register():
             cur.execute("INSERT INTO doctors (id, name, password) VALUES (?,?,?)", (doctor_id, name, hashed))
             conn.commit()
             conn.close()
-            return redirect(url_for("login"))
+            return redirect(url_for("login", registered="1", doctor_id=doctor_id))
         except sqlite3.IntegrityError:
-            return render_template("register.html", error="Doctor ID already exists")
+            return render_template("register.html", error="Registration failed")
     return render_template("register.html")
 
 
