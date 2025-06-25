@@ -17,7 +17,8 @@ const bgInput = document.getElementById("bg");
 const patientIdInput = document.getElementById("patientId");
 const shareBtn = document.getElementById("shareBtn");
 
-let currentDoctorId = "";
+let currentDoctorId = typeof currentDoctorId !== "undefined" ? currentDoctorId : "";
+let currentDoctorName = typeof currentDoctorName !== "undefined" ? currentDoctorName : "";
 
 let activeTimestamp = null;
 let activePatientId = null;
@@ -298,8 +299,9 @@ document.getElementById("uploadForm").addEventListener("submit", async (e) => {
   document.getElementById("displayAge").textContent = ageParts.filter(Boolean).join(", ");
   document.getElementById("displaySex").textContent = sexParts.filter(Boolean).join(", ");
   document.getElementById("displayBg").textContent = bg;
-  document.getElementById("displayDoctorId").textContent = currentDoctorId;
-  document.getElementById("displayLastEditor").textContent = currentDoctorId;
+  const docDisplay = currentDoctorName ? `${currentDoctorName} (${currentDoctorId})` : currentDoctorId;
+  document.getElementById("displayDoctorId").textContent = docDisplay;
+  document.getElementById("displayLastEditor").textContent = docDisplay;
 
   inputImg = await loadImage("data:image/png;base64," + data.input_base64);
   mask1 = await loadImage("data:image/png;base64," + data.output1_base64);
@@ -623,7 +625,8 @@ async function loadSidebarCases() {
     entry.className = "case-entry border-bottom py-2";
     let text = `Patient: ${item.patient_id} | Case: ${item.timestamp}`;
     if (item.last_editor) {
-      text += ` (last edit: ${item.last_editor})`;
+      const le = item.last_editor_name ? `${item.last_editor_name} (${item.last_editor})` : item.last_editor;
+      text += ` (last edit: ${le})`;
     }
     entry.innerText = text;
     entry.style.cursor = "pointer";
@@ -672,8 +675,10 @@ async function loadCase(patientId, timestamp) {
   document.getElementById("displayAge").textContent = ageArr.filter(Boolean).join(", ");
   document.getElementById("displaySex").textContent = sexArr.filter(Boolean).join(", ");
   document.getElementById("displayBg").textContent = info.bg || "";
-  document.getElementById("displayDoctorId").textContent = currentDoctorId || "N/A";
-  document.getElementById("displayLastEditor").textContent = data.last_editor || currentDoctorId || "N/A";
+  const docDisp2 = data.doctor_name ? `${data.doctor_name} (${data.doctor_id})` : (data.doctor_id || currentDoctorId || "N/A");
+  const lastDisp = data.last_editor_name ? `${data.last_editor_name} (${data.last_editor})` : (data.last_editor || currentDoctorId || "N/A");
+  document.getElementById("displayDoctorId").textContent = docDisp2;
+  document.getElementById("displayLastEditor").textContent = lastDisp;
 
 
   const opacity1 = parseFloat(document.getElementById("opacity1").value);

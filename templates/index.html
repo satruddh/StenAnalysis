@@ -239,6 +239,10 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const currentDoctorId = "{{ session.get('doctor_id', '') }}";
+    const currentDoctorName = "{{ session.get('doctor_name', '') }}";
+  </script>
   <script src="{{ url_for('static', filename='main.js') }}"></script>
 </body>
 

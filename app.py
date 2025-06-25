@@ -36,6 +36,17 @@ BASE_CASE_DIR = "cases"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(BASE_CASE_DIR,exist_ok=True)
 
+def get_doctor_name(doc_id: str) -> str:
+    """Look up a doctor's name by ID."""
+    if not doc_id:
+        return ""
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute("SELECT name FROM doctors WHERE id=?", (doc_id,))
+    row = cur.fetchone()
+    conn.close()
+    return row[0] if row else ""
+
 @app.after_request
 def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', '*')
@@ -350,8 +361,12 @@ def list_cases(patient_id):
                 idx = json.load(idxf)
                 for ce in idx.get("cases", []):
                     if ce.get("timestamp") == case_entry["timestamp"]:
-                        case_entry["doctor_id"] = ce.get("doctor_id")
-                        case_entry["last_editor"] = ce.get("last_editor", ce.get("doctor_id"))
+                        doc_id = ce.get("doctor_id")
+                        last_id = ce.get("last_editor", doc_id)
+                        case_entry["doctor_id"] = doc_id
+                        case_entry["last_editor"] = last_id
+                        case_entry["doctor_name"] = get_doctor_name(doc_id)
+                        case_entry["last_editor_name"] = get_doctor_name(last_id)
                         break
         cases.append(case_entry)
 
@@ -379,6 +394,8 @@ def load_case(patient_id, timestamp):
                 if entry["timestamp"] == timestamp:
                     doctor_id = entry.get("doctor_id", "")
                     last_editor = entry.get("last_editor", doctor_id)
+                    doctor_name = get_doctor_name(doctor_id)
+                    last_editor_name = get_doctor_name(last_editor)
                     break
 
     def encode_image(path):
@@ -395,7 +412,9 @@ def load_case(patient_id, timestamp):
         "annotations": [],
         "timestamp": timestamp,
         "doctor_id": doctor_id,
-        "last_editor": last_editor
+        "last_editor": last_editor,
+        "doctor_name": doctor_name,
+        "last_editor_name": last_editor_name
     }
 
     if os.path.exists(info_path):
@@ -469,12 +488,16 @@ def all_cases():
                 index = json.load(f)
                 for case in index.get("cases", []):
                     if case.get("doctor_id") == doctor_id or doctor_id in case.get("shared_with", []):
+                        doc_id = case.get("doctor_id")
+                        last_id = case.get("last_editor", doc_id)
                         all_data.append({
                             "patient_id": patient_id,
                             "timestamp": case["timestamp"],
                             "note": case.get("notes", "").split("\n")[0],
-                            "doctor_id": case.get("doctor_id"),
-                            "last_editor": case.get("last_editor", case.get("doctor_id"))
+                            "doctor_id": doc_id,
+                            "last_editor": last_id,
+                            "doctor_name": get_doctor_name(doc_id),
+                            "last_editor_name": get_doctor_name(last_id)
                         })
         except Exception as e:
             print(f"Error reading index.json for {patient_id}: {e}")
