@@ -556,7 +556,9 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
 
 
 window.addEventListener("DOMContentLoaded", () => {
-  patientIdInput.value = generatePatientId();
+  if (!patientIdInput.value) {
+    patientIdInput.value = generatePatientId();
+  }
   loadSidebarCases();
 });
 

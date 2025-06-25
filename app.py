@@ -554,7 +554,8 @@ def logout():
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    new_patient_id = uuid.uuid4().hex[:6].upper()
+    return render_template("index.html", new_patient_id=new_patient_id)
 
 
 if __name__ == "__main__":

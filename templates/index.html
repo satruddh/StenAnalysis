@@ -45,7 +45,7 @@
           <div class="form-step" id="detailsSection">
             <div class="mb-3">
               <label for="patientId" class="form-label">Patient ID</label>
-              <input type="text" class="form-control form-control-centered" id="patientId" readonly>
+              <input type="text" class="form-control form-control-centered" id="patientId" value="{{ new_patient_id }}" readonly>
             </div>
             <div class="mb-3">
               <label for="patientName" class="form-label">Patient Name</label>
@@ -71,7 +71,7 @@
               <label for="bg" class="form-label">Blood Group</label>
               <input type="text" class="form-control form-control-centered" id="bg">
             </div>
-            <button id="nextBtn" class="btn btn-primary mt-3">Next</button>
+            <button id="nextBtn" type="button" class="btn btn-primary mt-3">Next</button>
           </div>
           <div class="form-step" id="uploadSection">
             <div class="mb-3">
