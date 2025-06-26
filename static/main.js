@@ -17,8 +17,8 @@ const bgInput = document.getElementById("bg");
 const patientIdInput = document.getElementById("patientId");
 const shareBtn = document.getElementById("shareBtn");
 
-let currentDoctorId = typeof currentDoctorId !== "undefined" ? currentDoctorId : "";
-let currentDoctorName = typeof currentDoctorName !== "undefined" ? currentDoctorName : "";
+let currentDoctorId = window.currentDoctorId || "";
+let currentDoctorName = window.currentDoctorName || "";
 
 let activeTimestamp = null;
 let activePatientId = null;
@@ -56,11 +56,15 @@ removeImageBtn.addEventListener("click", () => {
 nextBtn.addEventListener("click", (e) => {
   e.preventDefault();
   formCarousel.classList.add("show-upload");
+  document.getElementById("detailsSection").classList.add("d-none");
+  document.getElementById("uploadSection").classList.remove("d-none");
 });
 
 backBtn.addEventListener("click", (e) => {
   e.preventDefault();
   formCarousel.classList.remove("show-upload");
+  document.getElementById("detailsSection").classList.remove("d-none");
+  document.getElementById("uploadSection").classList.add("d-none");
 });
 
 function loadImage(src) {
