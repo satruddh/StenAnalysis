@@ -56,15 +56,11 @@ removeImageBtn.addEventListener("click", () => {
 nextBtn.addEventListener("click", (e) => {
   e.preventDefault();
   formCarousel.classList.add("show-upload");
-  document.getElementById("detailsSection").classList.add("d-none");
-  document.getElementById("uploadSection").classList.remove("d-none");
 });
 
 backBtn.addEventListener("click", (e) => {
   e.preventDefault();
   formCarousel.classList.remove("show-upload");
-  document.getElementById("detailsSection").classList.remove("d-none");
-  document.getElementById("uploadSection").classList.add("d-none");
 });
 
 function loadImage(src) {
