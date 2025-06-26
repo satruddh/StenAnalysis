@@ -14,6 +14,7 @@ from flask import send_file
 from flask import render_template
 import sqlite3
 import hashlib
+import uuid
 
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
@@ -34,6 +35,17 @@ UPLOAD_FOLDER = "uploads"
 BASE_CASE_DIR = "cases"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(BASE_CASE_DIR,exist_ok=True)
+
+def get_doctor_name(doc_id: str) -> str:
+    """Look up a doctor's name by ID."""
+    if not doc_id:
+        return ""
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute("SELECT name FROM doctors WHERE id=?", (doc_id,))
+    row = cur.fetchone()
+    conn.close()
+    return row[0] if row else ""
 
 @app.after_request
 def after_request(response):
@@ -297,18 +309,25 @@ def save_analysis():
                 index_data = json.load(f)
 
         
-        index_data["cases"] = [
-            entry for entry in index_data["cases"]
-            if not (entry["timestamp"] == timestamp and entry["doctor_id"] == doctor_id)
-        ]
+        found = False
+        for entry in index_data.get("cases", []):
+            if entry.get("timestamp") == timestamp:
+                entry["notes"] = notes
+                entry["annotations"] = "annotations.json"
+                entry["annotated_images"] = annotated_files
+                entry["last_editor"] = doctor_id
+                found = True
+                break
 
-        index_data["cases"].append({
-            "timestamp": timestamp,
-            "doctor_id": doctor_id,
-            "notes": notes,
-            "annotations": "annotations.json",
-            "annotated_images": annotated_files
-        })
+        if not found:
+            index_data.setdefault("cases", []).append({
+                "timestamp": timestamp,
+                "doctor_id": doctor_id,
+                "last_editor": doctor_id,
+                "notes": notes,
+                "annotations": "annotations.json",
+                "annotated_images": annotated_files
+            })
 
         with open(index_path, "w") as f:
             json.dump(index_data, f, indent=2)
@@ -335,10 +354,21 @@ def list_cases(patient_id):
         if os.path.exists(notes_path):
             with open(notes_path) as f:
                 note = f.read().strip().split("\n")[0]  
-        cases.append({
-            "timestamp": folder.replace("case_", ""),
-            "note": note
-        })
+        case_entry = {"timestamp": folder.replace("case_", ""), "note": note}
+        index_path = os.path.join(patient_dir, "index.json")
+        if os.path.exists(index_path):
+            with open(index_path) as idxf:
+                idx = json.load(idxf)
+                for ce in idx.get("cases", []):
+                    if ce.get("timestamp") == case_entry["timestamp"]:
+                        doc_id = ce.get("doctor_id")
+                        last_id = ce.get("last_editor", doc_id)
+                        case_entry["doctor_id"] = doc_id
+                        case_entry["last_editor"] = last_id
+                        case_entry["doctor_name"] = get_doctor_name(doc_id)
+                        case_entry["last_editor_name"] = get_doctor_name(last_id)
+                        break
+        cases.append(case_entry)
 
     return jsonify({"cases": cases})
 
@@ -356,12 +386,16 @@ def load_case(patient_id, timestamp):
     info_path = os.path.join(BASE_CASE_DIR, patient_id, "patient_info.json")
 
     doctor_id = ""
+    last_editor = ""
     if os.path.exists(index_path):
         with open(index_path) as f:
             data = json.load(f)
             for entry in data.get("cases", []):
                 if entry["timestamp"] == timestamp:
                     doctor_id = entry.get("doctor_id", "")
+                    last_editor = entry.get("last_editor", doctor_id)
+                    doctor_name = get_doctor_name(doctor_id)
+                    last_editor_name = get_doctor_name(last_editor)
                     break
 
     def encode_image(path):
@@ -377,7 +411,10 @@ def load_case(patient_id, timestamp):
         "notes": "",
         "annotations": [],
         "timestamp": timestamp,
-        "doctor_id": doctor_id
+        "doctor_id": doctor_id,
+        "last_editor": last_editor,
+        "doctor_name": doctor_name,
+        "last_editor_name": last_editor_name
     }
 
     if os.path.exists(info_path):
@@ -451,10 +488,16 @@ def all_cases():
                 index = json.load(f)
                 for case in index.get("cases", []):
                     if case.get("doctor_id") == doctor_id or doctor_id in case.get("shared_with", []):
+                        doc_id = case.get("doctor_id")
+                        last_id = case.get("last_editor", doc_id)
                         all_data.append({
                             "patient_id": patient_id,
                             "timestamp": case["timestamp"],
-                            "note": case.get("notes", "").split("\n")[0]
+                            "note": case.get("notes", "").split("\n")[0],
+                            "doctor_id": doc_id,
+                            "last_editor": last_id,
+                            "doctor_name": get_doctor_name(doc_id),
+                            "last_editor_name": get_doctor_name(last_id)
                         })
         except Exception as e:
             print(f"Error reading index.json for {patient_id}: {e}")
@@ -476,15 +519,19 @@ def login():
             session["doctor_name"] = row[1]
             return redirect(url_for("home"))
         return render_template("login.html", error="Invalid credentials")
-    return render_template("login.html")
+    message = None
+    if request.args.get("registered"):
+        doctor_id = request.args.get("doctor_id", "")
+        message = f"Registration successful. Your Doctor ID is {doctor_id}."
+    return render_template("login.html", message=message)
 
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        doctor_id = request.form.get("doctor_id")
         name = request.form.get("name")
         password = request.form.get("password", "")
+        doctor_id = uuid.uuid4().hex[:8]
         hashed = hashlib.sha256(password.encode()).hexdigest()
         try:
             conn = sqlite3.connect(DB_PATH)
@@ -492,9 +539,9 @@ def register():
             cur.execute("INSERT INTO doctors (id, name, password) VALUES (?,?,?)", (doctor_id, name, hashed))
             conn.commit()
             conn.close()
-            return redirect(url_for("login"))
+            return redirect(url_for("login", registered="1", doctor_id=doctor_id))
         except sqlite3.IntegrityError:
-            return render_template("register.html", error="Doctor ID already exists")
+            return render_template("register.html", error="Registration failed")
     return render_template("register.html")
 
 
@@ -507,7 +554,8 @@ def logout():
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    new_patient_id = uuid.uuid4().hex[:6].upper()
+    return render_template("index.html", new_patient_id=new_patient_id)
 
 
 if __name__ == "__main__":

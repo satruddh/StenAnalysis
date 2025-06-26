@@ -17,7 +17,8 @@ const bgInput = document.getElementById("bg");
 const patientIdInput = document.getElementById("patientId");
 const shareBtn = document.getElementById("shareBtn");
 
-let currentDoctorId = "";
+let currentDoctorId = window.currentDoctorId || "";
+let currentDoctorName = window.currentDoctorName || "";
 
 let activeTimestamp = null;
 let activePatientId = null;
@@ -298,7 +299,9 @@ document.getElementById("uploadForm").addEventListener("submit", async (e) => {
   document.getElementById("displayAge").textContent = ageParts.filter(Boolean).join(", ");
   document.getElementById("displaySex").textContent = sexParts.filter(Boolean).join(", ");
   document.getElementById("displayBg").textContent = bg;
-  document.getElementById("displayDoctorId").textContent = currentDoctorId;
+  const docDisplay = currentDoctorName ? `${currentDoctorName} (${currentDoctorId})` : currentDoctorId;
+  document.getElementById("displayDoctorId").textContent = docDisplay;
+  document.getElementById("displayLastEditor").textContent = docDisplay;
 
   inputImg = await loadImage("data:image/png;base64," + data.input_base64);
   mask1 = await loadImage("data:image/png;base64," + data.output1_base64);
@@ -553,7 +556,9 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
 
 
 window.addEventListener("DOMContentLoaded", () => {
-  patientIdInput.value = generatePatientId();
+  if (!patientIdInput.value) {
+    patientIdInput.value = generatePatientId();
+  }
   loadSidebarCases();
 });
 
@@ -620,7 +625,12 @@ async function loadSidebarCases() {
   data.cases.forEach(item => {
     const entry = document.createElement("div");
     entry.className = "case-entry border-bottom py-2";
-    entry.innerText = `Patient: ${item.patient_id} | Case: ${item.timestamp}`;
+    let text = `Patient: ${item.patient_id} | Case: ${item.timestamp}`;
+    if (item.last_editor) {
+      const le = item.last_editor_name ? `${item.last_editor_name} (${item.last_editor})` : item.last_editor;
+      text += ` (last edit: ${le})`;
+    }
+    entry.innerText = text;
     entry.style.cursor = "pointer";
     entry.onclick = () => loadCase(item.patient_id, item.timestamp);
     caseList.appendChild(entry);
@@ -667,7 +677,10 @@ async function loadCase(patientId, timestamp) {
   document.getElementById("displayAge").textContent = ageArr.filter(Boolean).join(", ");
   document.getElementById("displaySex").textContent = sexArr.filter(Boolean).join(", ");
   document.getElementById("displayBg").textContent = info.bg || "";
-  document.getElementById("displayDoctorId").textContent = currentDoctorId || "N/A";
+  const docDisp2 = data.doctor_name ? `${data.doctor_name} (${data.doctor_id})` : (data.doctor_id || currentDoctorId || "N/A");
+  const lastDisp = data.last_editor_name ? `${data.last_editor_name} (${data.last_editor})` : (data.last_editor || currentDoctorId || "N/A");
+  document.getElementById("displayDoctorId").textContent = docDisp2;
+  document.getElementById("displayLastEditor").textContent = lastDisp;
 
 
   const opacity1 = parseFloat(document.getElementById("opacity1").value);
@@ -684,6 +697,9 @@ async function loadCase(patientId, timestamp) {
   setupControls("canvas1", inputImg, mask1, "view1", "opacity1", "smooth1", "overlayColor1");
   setupControls("canvas2", inputImg, mask2, "view2", "opacity2", "smooth2", "overlayColor2");
   setupLegendColorSync();
+
+  document.getElementById("canvas1").onclick = () => setupFabricAnnotation("canvas1");
+  document.getElementById("canvas2").onclick = () => setupFabricAnnotation("canvas2");
 }
 
 document.getElementById("newCaseButton").addEventListener("click", () => {
